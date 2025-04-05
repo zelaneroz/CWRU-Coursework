@@ -1,0 +1,1 @@
+I created separate java files for each problem in the homework. I also created a separate java file for the test classes required to be made for each of problems 2 to 4. They are named [Class]Test.java. Example, the test class for the HW1.BankAccount class is named HW1.BankAccountTest.java.
