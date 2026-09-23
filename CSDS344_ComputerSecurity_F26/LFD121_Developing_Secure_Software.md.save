@@ -1,0 +1,7 @@
+# Part 1: Requirements, Design, and Reuse
+
+* Security Basics - high-level overview about security, privacy, requirements, and risk management.
+* Secure Design Principles - describes how to design software to be secure, focusing on key secure design principles such as least privilege, complete mediation, and input validation.
+* Reusing External Software - how to reuse software with security in mind, selecting, downloading, and updating such software.
+
+
