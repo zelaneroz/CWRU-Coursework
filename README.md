@@ -13,3 +13,5 @@ For example:
 ### **Disclaimer**
 
 This repository is for personal and reference use only. All contents, including assignments and project code, are my original work and are subject to the CWRU Academic Integrity Policy. Please do not copy or plagiarize any of the code or written content in this repository.
+
+Any output here is also not guaranteed to be marked 100%. View at your own risk.
