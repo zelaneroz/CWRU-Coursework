@@ -1,8 +1,22 @@
-# PA2: Sparse Matrix Foundations
+# PA3: Matrix with Arithmetic, Block Extraction, Rounded Dimensions, & Size Validation
 
 This Java 17 project implements the sparse-matrix building blocks required by
-CSDS 293 Programming Assignment 2. Strassen multiplication is intentionally not
-included because the assignment reserves it for a later programming assignment.
+CSDS 293 Programming Assignment 3. 
+
+## PA3 Implementation Sequence
+```.md
+1. Obtain the discussion-section changes that the PDF references but does not enumerate.
+2. Resolve the multiplication, logical-size, empty-size, and remap-collision questions.
+3. Add range predicates to Coordinates and delegation in Entry.
+4. Add stream, remap, and rounded sizing to EntryMap.
+5. Add and test InconsistentSizeException.
+6. Introduce Matrix factories, accessors, and representation delegation.
+7. Implement negation.
+8. Implement a shared addition/subtraction mechanism.
+9. Implement submatrix filtering and translation once logical extent handling is settled.
+10. Run tests and perform a final McCabe/duplication review.
+```
+
 
 ## Project structure
 
@@ -20,107 +34,37 @@ test execution, and packaging. This avoids machine-specific JAR files and manual
 classpath configuration, and lets VS Code import the same build used from the
 terminal.
 
-## Software Architecture
+## Architecture and craftsmanship
+
+**Coordinates**
+* PA2: matrix location & coordinate arithmetic
+* PA3:
+    - add method `public boolean isInRows(int lower, int upper)`
+    - add method `public boolean isInColumns(int lower, int upper)`
+    - essentially, range knowledge belongs with `Coordinates` to avoid repetitive implementation in `Matrix`
+    - look into error handling for these
+
+**Entry<T>**
+* PA2: an immutable coordinate/value pair.
+* PA3:
+    - add method `public boolean isInRows(int lower, int upper)`
+    - add method `public boolean isInColumns(int lower, int upper)`
+
+**EntryMap<T>**
+* PA2: generic immutable sparse storage.
+
+**Matrix**
+* PA3: Matrix contains an `EntryMap<Float>` used for float-specific algebra
+* PA3: `InconsistentSizeException` method for size validation of matrix
+
 ```mermaid
-classDiagram
-    direction TB
-
-    class Coordinates {
-        <<record>>
-        -int row
-        -int column
-
-        +Coordinates ORIGIN$
-        +Coordinates HORIZONTAL_UNIT$
-        +Coordinates VERTICAL_UNIT$
-        +Coordinates DIAGONAL_UNIT$
-        +Coordinates NEGATIVE_HORIZONTAL_UNIT$
-        +Comparator COMPARATOR$
-
-        +Coordinates(int row, int column)
-        +row() int
-        +column() int
-        +negated() Coordinates
-        +plus(Coordinates offset) Coordinates
-        +minus(Coordinates origin) Coordinates
-        +times(int scale) Coordinates
-        +compareTo(Coordinates other) int
-        +equals(Object other) boolean
-        +hashCode() int
-        +toString() String
-    }
-
-    class Comparable {
-        <<interface>>
-        +compareTo(Object other) int
-    }
-
-    class Comparator {
-        <<interface>>
-        +compare(Object first, Object second) int
-    }
-
-    Coordinates ..|> Comparable : implements
-    Coordinates --> Comparator : defines COMPARATOR
-
-    class Entry~T~ {
-        <<record>>
-        -Coordinates coordinates
-        -T value
-
-        +Entry(Coordinates coordinates, T value)
-        +coordinates() Coordinates
-        +value() T
-        +translated(Coordinates offset) Entry~T~
-        +equals(Object other) boolean
-        +hashCode() int
-        +toString() String
-    }
-
-    Entry --> Coordinates : identifies location
-
-    class EntryMap~T~ {
-        <<final>>
-        -NavigableMap entryMap
-        -int rows
-        -int columns
-
-        -EntryMap(NavigableMap entryMap)
-        +from(Map entryMap)$ EntryMap~T~
-        +get(Coordinates coordinates) T
-        +getOrDefault(Coordinates coordinates, T defaultValue) T
-        +rows() int
-        +columns() int
-        +size() int
-    }
-
-    class Map {
-        <<interface>>
-    }
-
-    class NavigableMap {
-        <<interface>>
-    }
-
-    NavigableMap --|> Map : extends
-    EntryMap *-- NavigableMap : privately owns
-    EntryMap --> Coordinates : uses as keys
-    EntryMap ..> Map : factory input
-    EntryMap ..> Entry : represents equivalent entries
-
-
-    note for EntryMap "Stores only explicitly supplied entries.\nThe factory creates a defensive,\nordered, unmodifiable copy."
-    note for Coordinates "Natural ordering is row first,\nthen column."
+flowchart LR
+    C["Coordinates<br/>location and ranges"] --> E["Entry&lt;T&gt;<br/>coordinate/value pair"]
+    C --> EM["EntryMap&lt;T&gt;<br/>generic sparse storage"]
+    E --> EM
+    EM --> M["Matrix<br/>Float-specific algebra"]
+    X["InconsistentSizeException"] -. "size validation" .-> M
 ```
-
-### Coordinates (location)
-* stores a row and column; it does not contain a matrix value. Only a location.
-* SORTING: --> HOW?
-
-### Entry<T>
-
-
-## Software Craftsmanship
 
 - **Small, focused types:** `Coordinates` handles location and ordering,
   `Entry<T>` binds a location to a value, and `EntryMap<T>` owns sparse storage.
