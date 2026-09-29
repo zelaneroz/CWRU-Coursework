@@ -1,7 +1,9 @@
 package strassen;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -22,5 +24,15 @@ class EntryTest {
 
         Entry<Double> entry = new Entry<>(Coordinates.ORIGIN, 1.0);
         assertThrows(NullPointerException.class, () -> entry.translated(null));
+    }
+
+    @Test
+    void delegatesRangeChecksToItsCoordinates() {
+        Entry<Double> entry = new Entry<>(new Coordinates(2, 3), 4.5);
+
+        assertTrue(entry.isInRows(1, 3));
+        assertTrue(entry.isInColumns(3, 4));
+        assertFalse(entry.isInRows(0, 2));
+        assertFalse(entry.isInColumns(0, 3));
     }
 }

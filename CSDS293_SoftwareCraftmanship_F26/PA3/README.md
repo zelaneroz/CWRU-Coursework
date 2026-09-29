@@ -3,25 +3,19 @@
 This Java 17 project implements the sparse-matrix building blocks required by
 CSDS 293 Programming Assignment 3. 
 
-## PA3 Implementation Sequence
-```.md
-1. Obtain the discussion-section changes that the PDF references but does not enumerate.
-2. Resolve the multiplication, logical-size, empty-size, and remap-collision questions.
-3. Add range predicates to Coordinates and delegation in Entry.
-4. Add stream, remap, and rounded sizing to EntryMap.
-5. Add and test InconsistentSizeException.
-6. Introduce Matrix factories, accessors, and representation delegation.
-7. Implement negation.
-8. Implement a shared addition/subtraction mechanism.
-9. Implement submatrix filtering and translation once logical extent handling is settled.
-10. Run tests and perform a final McCabe/duplication review.
-```
+## PA3 functionality
+
+- `Coordinates` and `Entry` identify entries in half-open row and column ranges.
+- `EntryMap` provides ordered streaming, functional remapping, and power-of-two sizing.
+- `Matrix` provides sparse access, negation, addition, subtraction, and translated block extraction.
+- `InconsistentSizeException` records both sizes when arithmetic operands are incompatible.
+- Arithmetic and block extraction preserve logical dimensions even when trailing values are zero.
 
 
 ## Project structure
 
 ```text
-PA2/
+PA3/
 ├── pom.xml
 └── src/
     ├── main/java/strassen/     production classes
@@ -34,37 +28,103 @@ test execution, and packaging. This avoids machine-specific JAR files and manual
 classpath configuration, and lets VS Code import the same build used from the
 terminal.
 
-## Architecture and craftsmanship
-
-**Coordinates**
-* PA2: matrix location & coordinate arithmetic
-* PA3:
-    - add method `public boolean isInRows(int lower, int upper)`
-    - add method `public boolean isInColumns(int lower, int upper)`
-    - essentially, range knowledge belongs with `Coordinates` to avoid repetitive implementation in `Matrix`
-    - look into error handling for these
-
-**Entry<T>**
-* PA2: an immutable coordinate/value pair.
-* PA3:
-    - add method `public boolean isInRows(int lower, int upper)`
-    - add method `public boolean isInColumns(int lower, int upper)`
-
-**EntryMap<T>**
-* PA2: generic immutable sparse storage.
-
-**Matrix**
-* PA3: Matrix contains an `EntryMap<Float>` used for float-specific algebra
-* PA3: `InconsistentSizeException` method for size validation of matrix
+## Architecture
 
 ```mermaid
-flowchart LR
-    C["Coordinates<br/>location and ranges"] --> E["Entry&lt;T&gt;<br/>coordinate/value pair"]
-    C --> EM["EntryMap&lt;T&gt;<br/>generic sparse storage"]
-    E --> EM
-    EM --> M["Matrix<br/>Float-specific algebra"]
-    X["InconsistentSizeException"] -. "size validation" .-> M
+classDiagram
+    class Coordinates {
+        <<record>>
+        +int row
+        +int column
+        +Coordinates ORIGIN$
+        +Coordinates HORIZONTAL_UNIT$
+        +Coordinates VERTICAL_UNIT$
+        +Coordinates DIAGONAL_UNIT$
+        +Coordinates NEGATIVE_HORIZONTAL_UNIT$
+        +Comparator~Coordinates~ COMPARATOR$
+        +negated() Coordinates
+        +plus(Coordinates offset) Coordinates
+        +minus(Coordinates origin) Coordinates
+        +times(int scale) Coordinates
+        +isInRows(int lower, int upper) boolean
+        +isInColumns(int lower, int upper) boolean
+        +compareTo(Coordinates other) int
+    }
+
+    class Entry~T~ {
+        <<record>>
+        +Coordinates coordinates
+        +T value
+        +translated(Coordinates offset) Entry~T~
+        +isInRows(int lower, int upper) boolean
+        +isInColumns(int lower, int upper) boolean
+    }
+
+    class EntryMap~T~ {
+        <<final class>>
+        -NavigableMap~Coordinates,T~ entryMap
+        -int rows
+        -int columns
+        -EntryMap(NavigableMap~Coordinates,T~ entryMap)
+        +from(Map~Coordinates,T~ entryMap)$ EntryMap~T~
+        +get(Coordinates coordinates) T
+        +getOrDefault(Coordinates coordinates, T defaultValue) T
+        +rows() int
+        +columns() int
+        +size() int
+        +stream() Stream~Entry~
+        +remap(Function~Coordinates,Coordinates~ coordinatesMapper, Function~T,T~ valueMapper) EntryMap~T~
+        +sizeRounded() int
+    }
+
+    class Matrix {
+        <<final class>>
+        -Float ZERO$
+        -EntryMap~Float~ representation
+        -int size
+        -Matrix(EntryMap~Float~ representation)
+        -Matrix(EntryMap~Float~ representation, int size)
+        +from(EntryMap~Float~ entryMap)$ Matrix
+        +from(Map~Coordinates,Float~ entryMap)$ Matrix
+        +size() int
+        +get(Coordinates coordinates) Float
+        +get() Float
+        +stream() Stream~Entry~
+        +negated() Matrix
+        +plus(Matrix other) Matrix
+        +minus(Matrix other) Matrix
+        +subMatrix(Coordinates origin, Coordinates bound) Matrix
+    }
+
+    class InconsistentSizeException {
+        <<final exception>>
+        -long serialVersionUID$
+        -int referenceSize
+        -int otherSize
+        +InconsistentSizeException(int referenceSize, int otherSize)
+        +getReferenceSize() int
+        +getOtherSize() int
+        +validate(int referenceSize, Matrix otherMatrix)$ void
+    }
+
+    class Sizes {
+        <<package-private helper>>
+        -Sizes()
+        ~rounded(int size)$ int
+        ~isRounded(int size)$ boolean
+    }
+
+    Entry~T~ *-- Coordinates : coordinates
+    EntryMap~T~ --> Coordinates : map keys
+    EntryMap~T~ ..> Entry~T~ : streams and remaps
+    Matrix *-- EntryMap~Float~ : representation
+    Matrix ..> Coordinates : lookup and bounds
+    Matrix ..> InconsistentSizeException : validates arithmetic
+    EntryMap~T~ ..> Sizes : rounds size
+    Matrix ..> Sizes : preserves logical size
 ```
+
+## Craftsmanship
 
 - **Small, focused types:** `Coordinates` handles location and ordering,
   `Entry<T>` binds a location to a value, and `EntryMap<T>` owns sparse storage.
@@ -120,6 +180,15 @@ flowchart LR
 - `rejectsInvalidPublicArguments` covers null maps, keys, values, lookup arguments,
   defaults, and negative matrix coordinates so invalid state cannot enter the
   representation.
+- Streaming, remapping, and rounded-size tests cover the PA3 additions.
+
+### `MatrixTest` and `InconsistentSizeExceptionTest`
+
+- Factory and accessor tests verify sparse zero behavior and power-of-two sizing.
+- Arithmetic tests cover negation, addition, subtraction, cancellation, nulls,
+  and inconsistent sizes.
+- Submatrix tests verify half-open filtering, coordinate translation, retained
+  logical dimensions, and invalid bounds.
 
 
 ## Build commands

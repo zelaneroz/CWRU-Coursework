@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -60,5 +61,51 @@ class EntryMapTest {
         assertThrows(NullPointerException.class, () -> entries.getOrDefault(null, 0.0));
         assertThrows(NullPointerException.class,
                 () -> entries.getOrDefault(Coordinates.ORIGIN, null));
+    }
+
+    @Test
+    void streamsEntriesInCoordinateOrder() {
+        EntryMap<Double> entries = EntryMap.from(Map.of(
+                new Coordinates(2, 0), 3.0,
+                new Coordinates(0, 1), 2.0));
+
+        assertEquals(List.of(
+                new Entry<>(new Coordinates(0, 1), 2.0),
+                new Entry<>(new Coordinates(2, 0), 3.0)),
+                entries.stream().toList());
+    }
+
+    @Test
+    void remapsCoordinatesAndValuesWithoutChangingTheOriginal() {
+        EntryMap<Double> entries = EntryMap.from(Map.of(Coordinates.ORIGIN, 2.0));
+
+        EntryMap<Double> remapped = entries.remap(
+                coordinates -> coordinates.plus(Coordinates.DIAGONAL_UNIT),
+                value -> value * 3.0);
+
+        assertEquals(6.0, remapped.get(Coordinates.DIAGONAL_UNIT));
+        assertNull(remapped.get(Coordinates.ORIGIN));
+        assertEquals(2.0, entries.get(Coordinates.ORIGIN));
+    }
+
+    @Test
+    void rejectsInvalidRemappingFunctionsAndResults() {
+        EntryMap<Double> entries = EntryMap.from(Map.of(Coordinates.ORIGIN, 2.0));
+
+        assertThrows(NullPointerException.class, () -> entries.remap(null, value -> value));
+        assertThrows(NullPointerException.class,
+                () -> entries.remap(coordinates -> coordinates, null));
+        assertThrows(NullPointerException.class,
+                () -> entries.remap(coordinates -> null, value -> value));
+        assertThrows(NullPointerException.class,
+                () -> entries.remap(coordinates -> coordinates, value -> null));
+    }
+
+    @Test
+    void roundsSizeUpToTheNextPowerOfTwo() {
+        assertEquals(0, EntryMap.from(Map.<Coordinates, Double>of()).sizeRounded());
+        assertEquals(1, EntryMap.from(Map.of(Coordinates.ORIGIN, 1.0)).sizeRounded());
+        assertEquals(4, EntryMap.from(Map.of(new Coordinates(2, 1), 1.0)).sizeRounded());
+        assertEquals(4, EntryMap.from(Map.of(new Coordinates(3, 1), 1.0)).sizeRounded());
     }
 }

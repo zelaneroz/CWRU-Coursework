@@ -15,4 +15,14 @@ public record Entry<T>(Coordinates coordinates, T value) {
         Objects.requireNonNull(offset, "offset must not be null");
         return new Entry<>(coordinates.plus(offset), value);
     }
+
+    /** Returns whether this entry's row is in the specified half-open interval. */
+    public boolean isInRows(int lower, int upper) {
+        return coordinates.isInRows(lower, upper);
+    }
+
+    /** Returns whether this entry's column is in the specified half-open interval. */
+    public boolean isInColumns(int lower, int upper) {
+        return coordinates.isInColumns(lower, upper);
+    }
 }

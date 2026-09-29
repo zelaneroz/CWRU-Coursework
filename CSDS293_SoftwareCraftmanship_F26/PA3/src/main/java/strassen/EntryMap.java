@@ -5,6 +5,9 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * An immutable sparse-matrix representation that stores only explicitly
@@ -75,5 +78,44 @@ public final class EntryMap<T> {
     /** Returns the larger of {@link #rows()} and {@link #columns()}. */
     public int size() {
         return Math.max(rows, columns);
+    }
+
+    /** Returns the entries in row-major coordinate order. */
+    public Stream<Entry<T>> stream() {
+        return entryMap.entrySet().stream()
+                .map(entry -> new Entry<>(entry.getKey(), entry.getValue()));
+    }
+
+    /**
+     * Returns a new entry map after applying the supplied mappings to every
+     * coordinate and value.
+     */
+    public EntryMap<T> remap(
+            Function<Coordinates, Coordinates> coordinatesMapper,
+            Function<T, T> valueMapper) {
+        Objects.requireNonNull(coordinatesMapper, "coordinatesMapper must not be null");
+        Objects.requireNonNull(valueMapper, "valueMapper must not be null");
+
+        Map<Coordinates, T> mappedEntries = stream()
+                .map(entry -> remap(entry, coordinatesMapper, valueMapper))
+                .collect(Collectors.toMap(Entry::coordinates, Entry::value));
+        return EntryMap.from(mappedEntries);
+    }
+
+    /** Returns the matrix size rounded up to a power of two. */
+    public int sizeRounded() {
+        return Sizes.rounded(size());
+    }
+
+    private static <T> Entry<T> remap(
+            Entry<T> entry,
+            Function<Coordinates, Coordinates> coordinatesMapper,
+            Function<T, T> valueMapper) {
+        assert entry != null : "entry must not be null";
+        assert coordinatesMapper != null : "coordinatesMapper must not be null";
+        assert valueMapper != null : "valueMapper must not be null";
+        return new Entry<>(
+                coordinatesMapper.apply(entry.coordinates()),
+                valueMapper.apply(entry.value()));
     }
 }

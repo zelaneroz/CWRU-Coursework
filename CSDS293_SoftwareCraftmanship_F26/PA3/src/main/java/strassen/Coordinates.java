@@ -38,6 +38,16 @@ public record Coordinates(int row, int column) implements Comparable<Coordinates
         return new Coordinates(row * scale, column * scale);
     }
 
+    /** Returns whether the row is in the half-open interval [{@code lower}, {@code upper}). */
+    public boolean isInRows(int lower, int upper) {
+        return lower <= row && row < upper;
+    }
+
+    /** Returns whether the column is in the half-open interval [{@code lower}, {@code upper}). */
+    public boolean isInColumns(int lower, int upper) {
+        return lower <= column && column < upper;
+    }
+
     @Override
     public int compareTo(Coordinates other) {
         Objects.requireNonNull(other, "other must not be null");

@@ -1,6 +1,7 @@
 package strassen;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -43,5 +44,15 @@ class CoordinatesTest {
         assertThrows(NullPointerException.class, () -> coordinates.plus(null));
         assertThrows(NullPointerException.class, () -> coordinates.minus(null));
         assertThrows(NullPointerException.class, () -> coordinates.compareTo(null));
+    }
+
+    @Test
+    void identifiesHalfOpenRowAndColumnRanges() {
+        Coordinates coordinates = new Coordinates(2, 3);
+
+        assertTrue(coordinates.isInRows(2, 3));
+        assertTrue(coordinates.isInColumns(1, 4));
+        assertFalse(coordinates.isInRows(0, 2));
+        assertFalse(coordinates.isInColumns(3, 3));
     }
 }
