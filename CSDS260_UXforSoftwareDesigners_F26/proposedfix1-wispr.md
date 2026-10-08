@@ -1,0 +1,6 @@
+  * CUGRID: 3659841
+  * MYID: zre3
+  * WHERE: iOS, Wispr Flow custom keyboard, switching keyboards inside any text field, on-the-go one-handed use
+  * HOW: Remove the app-switch round trip. add a one-tap shortcut (button in default keyboard and/or Action Button) that starts dictation without changing keyboards via the globe icon. (Setup): if the app must open, make it a one-time setup step, and when it does open, auto-return to the original app without a manual swipe. 
+  * DESC: The current flow takes about five steps before any speech is captured: switch keyboards with the globe, tap the Wispr button, wait for the app to open, swipe back, then start talking. That is too much coordination for a tool whose value is speed. Most of it is working around iOS limits on keyboard extensions, which is exactly why the user, not the system, is doing the work. This proposed fix option removes the keyboard switch entirely for people who dictate often. Rarely used setup steps can stay for first use only. This should be a moderate engineering effort, with the hard part being iOS background audio and permission rules.
+  * DESC-IMG: https://github.com/zelaneroz/CWRU-Coursework/blob/main/CSDS260_UXforSoftwareDesigners_F26/proposedfix1-wispr.png
